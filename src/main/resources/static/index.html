@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spring AI </title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+        textarea, button {
+            width: 100%;
+            margin-top: 10px;
+            padding: 12px;
+            font-size: 16px;
+        }
+        #output {
+            margin-top: 20px;
+            white-space: pre-wrap;
+            border: 1px solid #ccc;
+            padding: 15px;
+            min-height: 120px;
+            border-radius: 8px;
+        }
+    </style>
+</head>
+<body>
+<h1>Spring AI + Groq</h1>
+<textarea id="message" rows="5" placeholder="Type your prompt here...">
+
+</textarea>
+<button onclick="sendMessage()">Ask AI</button>
+<div id="output">Response will appear here...</div>
+
+<script>
+    async function sendMessage() {
+        const message = document.getElementById("message").value;
+        const output = document.getElementById("output");
+
+        if (!message.trim()) {
+            output.innerText = "Please enter a message.";
+            return;
+        }
+
+        output.innerText = "Loading...";
+
+        try {
+            const response = await fetch("/api/chat", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ message })
+            });
+
+            const data = await response.json();
+            output.innerText = data.aiResponse || "No response received.";
+        } catch (error) {
+            output.innerText = "Error: " + error.message;
+        }
+    }
+</script>
+</body>
+</html>
