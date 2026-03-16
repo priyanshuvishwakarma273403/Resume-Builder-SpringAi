@@ -1,4 +1,4 @@
-package com.example.Spring_Ai_practice;
+package com.springAi.ResumeBuilder;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

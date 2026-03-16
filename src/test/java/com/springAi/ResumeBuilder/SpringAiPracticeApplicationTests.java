@@ -1,4 +1,4 @@
-package com.example.Spring_Ai_practice;
+package com.springAi.ResumeBuilder;
 
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
