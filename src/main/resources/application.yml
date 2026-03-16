@@ -1,12 +1,16 @@
 server:
   port: 8080
 
+app:
+  groq:
+    api-key: ${GROQ_API_KEY}
+    base-url: https://api.groq.com/openai
+    model: llama3-70b-8192
+  openrouter:
+    api-key: ${OPENROUTER_API_KEY}
+    base-url: https://openrouter.ai/api
+    model: meta-llama/llama-3.1-8b-instruct:free
+
 spring:
-  ai:
-    openai:
-      api-key: ${GROQ_API_KEY}
-      base-url: https://api.groq.com/openai
-      chat:
-        options:
-          model: llama-3.3-70b-versatile
-          temperature: 0.7
+  application:
+    name: ai-resume-builder
