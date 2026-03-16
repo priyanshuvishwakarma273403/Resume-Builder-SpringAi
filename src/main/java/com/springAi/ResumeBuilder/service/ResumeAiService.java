@@ -3,11 +3,17 @@ package com.springAi.ResumeBuilder.service;
 import com.springAi.ResumeBuilder.dto.ResumeRequest;
 import com.springAi.ResumeBuilder.dto.ResumeResponse;
 import com.springAi.ResumeBuilder.dto.SectionResponse;
+import com.springAi.ResumeBuilder.entity.ResumeHistory;
+import com.springAi.ResumeBuilder.entity.User;
+import com.springAi.ResumeBuilder.repository.ResumeHistoryRepository;
+import com.springAi.ResumeBuilder.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,29 +28,58 @@ public class ResumeAiService {
     private final ChatClient openRouterChatClient;
 
     private final PromptBuilderService promptBuilderService;
+    private final ResumeHistoryRepository historyRepository;
+    private final UserRepository userRepository;
 
     public ResumeResponse generateResumeContent(ResumeRequest request) {
         String prompt = promptBuilderService.buildMasterPrompt(request);
-        ChatClient selectedClient = getClient(request.getProvider());
 
-        String response = selectedClient.prompt()
+        ChatClient client = getClient(request.getProvider());
+
+        String response = client.prompt()
                 .system("You are a world-class resume and LinkedIn profile writer.")
                 .user(prompt)
                 .call()
                 .content();
 
-        ResumeResponse resumeResponse = new ResumeResponse();
-        resumeResponse.setProvider(request.getProvider());
-        resumeResponse.setSections(parseSections(response));
-        return resumeResponse;
+        saveHistory(request, response);
+
+        ResumeResponse result = new ResumeResponse();
+        result.setProvider(request.getProvider());
+        result.setSections(parseSections(response));
+        return result;
+    }
+
+    public String generateMarkdownOnly(ResumeRequest request) {
+        String prompt = promptBuilderService.buildMasterPrompt(request);
+        ChatClient client = getClient(request.getProvider());
+        return client.prompt()
+                .system("Return polished ATS-friendly markdown resume only.")
+                .user(prompt)
+                .call()
+                .content();
     }
 
     private ChatClient getClient(String provider) {
-        return switch (provider.toLowerCase()) {
-            case "groq" -> groqChatClient;
-            case "openrouter" -> openRouterChatClient;
-            default -> throw new IllegalArgumentException("Invalid provider. Use 'groq' or 'openrouter'.");
-        };
+        return "openrouter".equalsIgnoreCase(provider) ? openRouterChatClient : groqChatClient;
+    }
+
+    private void saveHistory(ResumeRequest request, String response) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User user = userRepository.findByEmail(email).orElseThrow();
+
+        ResumeHistory history = ResumeHistory.builder()
+                .provider(request.getProvider())
+                .fullName(request.getFullName())
+                .targetRole(request.getTargetRole())
+                .requestPayload(request.toString())
+                .generatedContent(response)
+                .selectedTemplate(request.getSelectedTemplate())
+                .createdAt(LocalDateTime.now())
+                .user(user)
+                .build();
+
+        historyRepository.save(history);
     }
 
     private List<SectionResponse> parseSections(String text) {
@@ -65,13 +100,13 @@ public class ResumeAiService {
             if (start == -1) continue;
 
             int contentStart = start + markers[i].length();
-            int end = (i + 1 < markers.length) ? text.indexOf(markers[i + 1]) : text.length();
+            int end = i + 1 < markers.length ? text.indexOf(markers[i + 1]) : text.length();
             if (end == -1) end = text.length();
 
-            String title = markers[i].replace("### ", "").trim();
-            String content = text.substring(contentStart, end).trim();
-
-            sections.add(new SectionResponse(title, content));
+            sections.add(new SectionResponse(
+                    markers[i].replace("### ", ""),
+                    text.substring(contentStart, end).trim()
+            ));
         }
 
         if (sections.isEmpty()) {

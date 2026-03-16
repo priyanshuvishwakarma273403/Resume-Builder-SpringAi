@@ -13,10 +13,10 @@ public class OpenRouterConfig {
 
     @Bean
     public ChatClient openRouterChatClient(
-            @Value("${app.openrouter.api-key}") String apiKey,
             @Value("${app.openrouter.base-url}") String baseUrl,
+            @Value("${app.openrouter.api-key}") String apiKey,
             @Value("${app.openrouter.model}") String model
-    ){
+    ) {
         OpenAiApi api = OpenAiApi.builder()
                 .baseUrl(baseUrl)
                 .apiKey(apiKey)
@@ -27,8 +27,11 @@ public class OpenRouterConfig {
                 .temperature(0.8)
                 .build();
 
-        OpenAiChatModel chatModel = new OpenAiChatModel(api, options);
+        OpenAiChatModel chatModel = OpenAiChatModel.builder()
+                .openAiApi(api)
+                .defaultOptions(options)
+                .build();
+
         return ChatClient.builder(chatModel).build();
     }
-
 }

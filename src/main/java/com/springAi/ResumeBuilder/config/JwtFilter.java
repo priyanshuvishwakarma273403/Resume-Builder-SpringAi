@@ -1,5 +1,6 @@
 package com.springAi.ResumeBuilder.config;
 
+import com.springAi.ResumeBuilder.service.CustomUserDetailsService;
 import com.springAi.ResumeBuilder.service.JwtService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

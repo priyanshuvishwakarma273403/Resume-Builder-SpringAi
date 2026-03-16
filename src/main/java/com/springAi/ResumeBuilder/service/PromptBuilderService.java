@@ -7,10 +7,15 @@ import org.springframework.stereotype.Service;
 public class PromptBuilderService {
 
     public String buildMasterPrompt(ResumeRequest request) {
-        return """
-                You are an expert career assistant and resume writer.
+        String templateInstruction = switchTemplate(request.getSelectedTemplate());
 
-                Generate the following sections in clean plain text:
+        return """
+                You are an expert resume writer.
+
+                Use this style template:
+                %s
+
+                Generate:
                 1. Professional Summary
                 2. LinkedIn Headline
                 3. LinkedIn About
@@ -19,12 +24,9 @@ public class PromptBuilderService {
                 6. Recruiter Outreach Message
                 7. ATS Friendly Markdown Resume
 
-                Rules:
-                - Make the content strong, professional, and achievement-oriented.
-                - Keep language natural and recruiter-friendly.
-                - Do not use markdown code fences.
-                - Separate every section using this exact format:
+                If job description is provided, tailor the output strongly according to it.
 
+                Output section format:
                 ### Professional Summary
                 ...
                 ### LinkedIn Headline
@@ -40,7 +42,7 @@ public class PromptBuilderService {
                 ### ATS Friendly Markdown Resume
                 ...
 
-                Candidate Details:
+                Candidate:
                 Full Name: %s
                 Target Role: %s
                 Skills: %s
@@ -49,19 +51,34 @@ public class PromptBuilderService {
                 Education: %s
                 Achievements: %s
                 Certifications: %s
+
+                Job Description:
+                %s
                 """.formatted(
-                request.getFullName(),
-                request.getTargetRole(),
-                request.getSkills(),
-                request.getExperience(),
-                request.getProjects(),
-                request.getEducation(),
-                valueOrDefault(request.getAchievements()),
-                valueOrDefault(request.getCertifications())
+                templateInstruction,
+                safe(request.getFullName()),
+                safe(request.getTargetRole()),
+                safe(request.getSkills()),
+                safe(request.getExperience()),
+                safe(request.getProjects()),
+                safe(request.getEducation()),
+                safe(request.getAchievements()),
+                safe(request.getCertifications()),
+                safe(request.getJobDescription())
         );
     }
 
-    private String valueOrDefault(String value) {
+    private String switchTemplate(String template) {
+        if (template == null) return "Modern professional tone with concise achievement bullets.";
+        return switch (template.toLowerCase()) {
+            case "minimal" -> "Minimal, crisp, highly ATS-friendly, no flashy wording.";
+            case "executive" -> "Executive tone, leadership-oriented, strategic impact language.";
+            case "developer" -> "Technical, impact-focused, modern software engineer branding.";
+            default -> "Modern professional tone with concise achievement bullets.";
+        };
+    }
+
+    private String safe(String value) {
         return value == null || value.isBlank() ? "N/A" : value;
     }
 }

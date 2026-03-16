@@ -27,9 +27,11 @@ public class GroqConfig {
                 .temperature(0.7)
                 .build();
 
-        OpenAiChatModel chatModel = new OpenAiChatModel(api, options);
+        OpenAiChatModel chatModel = OpenAiChatModel.builder()
+                .openAiApi(api)
+                .defaultOptions(options)
+                .build();
+
         return ChatClient.builder(chatModel).build();
-
     }
-
 }
