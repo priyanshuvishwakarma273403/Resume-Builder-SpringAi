@@ -16,28 +16,38 @@ public class ExportService {
 
     public byte[] generatePdf(String content) {
         try {
+            if (content == null || content.isBlank()) {
+                throw new RuntimeException("Content is empty");
+            }
+
             ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
             Document document = new Document();
             PdfWriter.getInstance(document, outputStream);
 
             document.open();
+
             Font titleFont = new Font(Font.HELVETICA, 18, Font.BOLD);
             Font bodyFont = new Font(Font.HELVETICA, 11, Font.NORMAL);
 
             document.add(new Paragraph("AI Resume Export", titleFont));
             document.add(new Paragraph(" "));
             document.add(new Paragraph(content, bodyFont));
-            document.close();
 
+            document.close();
             return outputStream.toByteArray();
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate PDF");
+            throw new RuntimeException("Failed to generate PDF: " + e.getMessage(), e);
         }
     }
 
     public byte[] generateDocx(String content) {
         try (XWPFDocument document = new XWPFDocument();
              ByteArrayOutputStream outputStream = new ByteArrayOutputStream()) {
+
+            if (content == null || content.isBlank()) {
+                throw new RuntimeException("Content is empty");
+            }
 
             XWPFParagraph title = document.createParagraph();
             XWPFRun titleRun = title.createRun();
@@ -51,13 +61,9 @@ public class ExportService {
 
             document.write(outputStream);
             return outputStream.toByteArray();
+
         } catch (Exception e) {
-            throw new RuntimeException("Failed to generate DOCX");
+            throw new RuntimeException("Failed to generate DOCX: " + e.getMessage(), e);
         }
-
     }
-
 }
-
-
-

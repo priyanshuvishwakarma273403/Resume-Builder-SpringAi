@@ -4,7 +4,6 @@ import com.springAi.ResumeBuilder.dto.*;
 import com.springAi.ResumeBuilder.service.AtsAnalyzerService;
 import com.springAi.ResumeBuilder.service.CompareAiService;
 import com.springAi.ResumeBuilder.service.ResumeAiService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
 

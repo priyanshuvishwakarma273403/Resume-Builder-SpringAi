@@ -19,25 +19,46 @@ public class CompareAiService {
 
     private final PromptBuilderService promptBuilderService;
 
-    public CompareResponse compare(ResumeRequest request){
+    public CompareResponse compare(ResumeRequest request) {
         String prompt = promptBuilderService.buildMasterPrompt(request);
 
-        long groqStart = System.currentTimeMillis();
+        String groqResponse;
+        long groqLatency;
 
-       String groqResponse = groqChatClient.prompt()
-               .system("You are a world-class resume writer.")
-               .user(prompt)
-               .call()
-               .content();
-        long groqLatency = System.currentTimeMillis() - groqStart;
+        long groqStart = System.currentTimeMillis();
+        try {
+            groqResponse = groqChatClient.prompt()
+                    .system("You are a world-class resume writer.")
+                    .user(prompt)
+                    .call()
+                    .content();
+
+            if (groqResponse == null || groqResponse.isBlank()) {
+                groqResponse = "Groq returned empty response.";
+            }
+        } catch (Exception e) {
+            groqResponse = "Groq failed: " + e.getMessage();
+        }
+        groqLatency = System.currentTimeMillis() - groqStart;
+
+        String openResponse;
+        long openLatency;
 
         long openStart = System.currentTimeMillis();
-        String openResponse = openRouterChatClient.prompt()
-                .system("You are a world-class resume writer.")
-                .user(prompt)
-                .call()
-                .content();
-        long openLatency = System.currentTimeMillis() - openStart;
+        try {
+            openResponse = openRouterChatClient.prompt()
+                    .system("You are a world-class resume writer.")
+                    .user(prompt)
+                    .call()
+                    .content();
+
+            if (openResponse == null || openResponse.isBlank()) {
+                openResponse = "OpenRouter returned empty response.";
+            }
+        } catch (Exception e) {
+            openResponse = "OpenRouter failed: " + e.getMessage();
+        }
+        openLatency = System.currentTimeMillis() - openStart;
 
         return new CompareResponse(groqResponse, openResponse, groqLatency, openLatency);
     }

@@ -5,7 +5,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/ai_resume_builder?useSSL=false&serverTimezone=Asia/Kolkata&allowPublicKeyRetrieval=true
     username: root
-    password: "pop99558$$"
+    password: ${DB_PASSWORD}
     driver-class-name: com.mysql.cj.jdbc.Driver
 
   jpa:
@@ -17,11 +17,15 @@ spring:
         dialect: org.hibernate.dialect.MySQLDialect
         format_sql: true
 
+  jackson:
+    serialization:
+      indent_output: true
+
 app:
   groq:
     api-key: ${GROQ_API_KEY}
-    base-url: https://api.groq.com/openai/v1
-    model: llama3-70b-8192
+    base-url: https://api.groq.com/openai
+    model: llama-3.3-70b-versatile   # ✅ updated working model
 
   openrouter:
     api-key: ${OPENROUTER_API_KEY}
@@ -29,5 +33,11 @@ app:
     model: meta-llama/llama-3.1-8b-instruct:free
 
   jwt:
-    secret: mySuperSecretKeyForJwtTokenGeneration123456789
+    secret: ${JWT_SECRET}
     expiration: 86400000
+
+logging:
+  level:
+    root: INFO
+    org.springframework.ai: DEBUG   # AI debug logs helpful
+    org.hibernate.SQL: DEBUG

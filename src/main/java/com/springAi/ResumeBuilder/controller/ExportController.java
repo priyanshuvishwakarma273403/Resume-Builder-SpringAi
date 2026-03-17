@@ -1,5 +1,6 @@
 package com.springAi.ResumeBuilder.controller;
 
+import com.springAi.ResumeBuilder.dto.ExportRequest;
 import com.springAi.ResumeBuilder.service.ExportService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
@@ -16,8 +17,8 @@ public class ExportController {
     private final ExportService exportService;
 
     @PostMapping("/pdf")
-    public ResponseEntity<byte[]> exportPdf(@RequestBody String content) {
-        byte[] file = exportService.generatePdf(content);
+    public ResponseEntity<byte[]> exportPdf(@RequestBody ExportRequest request) {
+        byte[] file = exportService.generatePdf(request.getContent());
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=resume.pdf")
                 .contentType(MediaType.APPLICATION_PDF)
@@ -25,13 +26,12 @@ public class ExportController {
     }
 
     @PostMapping("/docx")
-    public ResponseEntity<byte[]> exportDocx(@RequestBody String content) {
-        byte[] file = exportService.generateDocx(content);
+    public ResponseEntity<byte[]> exportDocx(@RequestBody ExportRequest request) {
+        byte[] file = exportService.generateDocx(request.getContent());
         return ResponseEntity.ok()
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=resume.docx")
                 .contentType(MediaType.parseMediaType(
                         "application/vnd.openxmlformats-officedocument.wordprocessingml.document"))
                 .body(file);
     }
-
 }

@@ -42,7 +42,11 @@ public class ResumeAiService {
                 .call()
                 .content();
 
-        saveHistory(request, response);
+        if (response == null || response.isBlank()) {
+            throw new RuntimeException("Empty response received from AI provider");
+        }
+
+//        saveHistory(request, response);
 
         ResumeResponse result = new ResumeResponse();
         result.setProvider(request.getProvider());
@@ -65,21 +69,27 @@ public class ResumeAiService {
     }
 
     private void saveHistory(ResumeRequest request, String response) {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        User user = userRepository.findByEmail(email).orElseThrow();
+        var authentication = SecurityContextHolder.getContext().getAuthentication();
 
-        ResumeHistory history = ResumeHistory.builder()
-                .provider(request.getProvider())
-                .fullName(request.getFullName())
-                .targetRole(request.getTargetRole())
-                .requestPayload(request.toString())
-                .generatedContent(response)
-                .selectedTemplate(request.getSelectedTemplate())
-                .createdAt(LocalDateTime.now())
-                .user(user)
-                .build();
+        if (authentication == null || !authentication.isAuthenticated()
+                || "anonymousUser".equals(authentication.getName())) {
+            return;
+        }
 
-        historyRepository.save(history);
+        userRepository.findByEmail(authentication.getName()).ifPresent(user -> {
+            ResumeHistory history = ResumeHistory.builder()
+                    .provider(request.getProvider())
+                    .fullName(request.getFullName())
+                    .targetRole(request.getTargetRole())
+                    .requestPayload(request.toString())
+                    .generatedContent(response)
+                    .selectedTemplate(request.getSelectedTemplate())
+                    .createdAt(LocalDateTime.now())
+                    .user(user)
+                    .build();
+
+            historyRepository.save(history);
+        });
     }
 
     private List<SectionResponse> parseSections(String text) {
